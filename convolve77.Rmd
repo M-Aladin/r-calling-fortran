@@ -106,6 +106,8 @@ We call this function with:
 
 convolvef77 <- function(x, y) {
   dyn.load('convolve77.dll')
+  
+  
   lx = length(x)
   ly = length(y)
   retdata <- .Fortran("convolvef77",
