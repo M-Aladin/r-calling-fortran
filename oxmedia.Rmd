@@ -1,9 +1,7 @@
 ---
-title: "R Notebook"
+title: "oxmedia Fortran call"
 output: html_notebook
 ---
-
-> Application not running because it lacks the Shiny portion
 
 ```{r}
 # now, compile
