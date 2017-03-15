@@ -100,12 +100,22 @@ system("R CMD SHLIB convolve77.f")
 ```
 The file `facto.dll` should be there now.
 
+## Load the subroutine. Generic OS call
+```{r}
+# this loads the library in any system, Windows or Linux
+dyn.load(paste("convolve77", .Platform$dynlib.ext, sep = ""))
+
+# or use this
+# dyn.load('convolve77.dll') for Windows only
+```
+
+
 ## Test the function
 We call this function with:
 ```{r}
 
 convolvef77 <- function(x, y) {
-  dyn.load('convolve77.dll')
+  
   
   
   lx = length(x)
@@ -194,5 +204,9 @@ for(num in 1:10)
 ```
 
 
+## Unload the Fortran subroutine. Generic OS
+```{r}
+dyn.unload(paste("convolve77", .Platform$dynlib.ext, sep = ""))
+```
 
 
