@@ -1,0 +1,130 @@
+---
+title: "ODE model implementation in FORTRAN"
+output: html_notebook
+---
+
+Source: deSolve package manual.
+
+This example uses the package `deSolve`
+
+This is the function in Fortran:
+
+```
+c file mymodf.f
+      subroutine initmod(odeparms)
+        external odeparms
+        double precision parms(3)
+        common /myparms/parms
+        
+        call odeparms(3, parms)
+        return
+      end
+      
+      subroutine derivs (neq, t, y, ydot, yout, ip)
+        double precision t, y, ydot, k1, k2, k3
+        integer neq, ip(*)
+        dimension y(3), ydot(3), yout(*)
+        common /myparms/k1,k2,k3
+        
+          if(ip(1) < 1) call rexit("nout should be at least 1")
+          
+          ydot(1) = -k1*y(1) + k2*y(2)*y(3)
+          ydot(3) = k3*y(2)*y(2)
+          ydot(2) = -ydot(1) - ydot(3)
+          yout(1) = y(1) + y(2) + y(3)
+        return
+      end
+      
+      subroutine jac (neq, t, y, ml, mu, pd, nrowpd, yout, ip)
+        integer neq, ml, mu, nrowpd, ip
+        double precision y(*), pd(nrowpd,*), yout(*), t, k1, k2, k3
+        common /myparms/k1, k2, k3
+        
+          pd(1,1) = -k1
+          pd(2,1) = k1
+          pd(3,1) = 0.0
+          pd(1,2) = k2*y(3)
+          pd(2,2) = -k2*y(3) - 2*k3*y(2)
+          pd(3,2) = 2*k3*y(2)
+          pd(1,3) = k2*y(2)
+          pd(2,3) = -k2*y(2)
+          pd(3,3) = 0.0
+        return
+      end
+c end of file mymodf.f
+```
+
+In FORTRAN, parameters may be stored in a common block (here called myparms).
+During the initialisation, this common block is deﬁned to consist of a 3-valued
+vector (unnamed), but in the subroutines derivs and jac, the parameters are
+given a name (k1, ...).
+
+```{r}
+# now, compile
+system("R CMD SHLIB mymod.f")
+```
+
+```{r}
+library(deSolve)
+```
+
+```{r}
+# this loads the library in any system, Windows or Linux
+dyn.load(paste("mymod", .Platform$dynlib.ext, sep = ""))
+
+# dyn.load("mymod.dll")
+```
+
+
+
+This will create ﬁle `mymod.dll` on windows, or mymod.so on other platforms.
+We load the DLL, in windows as:
+
+```{r}
+library(deSolve)
+
+parms <- c(k1 = 0.04, k2 = 1e4, k3=3e7)
+Y <- c(y1 = 1.0, y2 = 0.0, y3 = 0.0)
+times <- c(0, 0.4*10^(0:11) )
+
+out <- ode(Y, times, func = "derivs", parms = parms,
+           jacfunc = "jac", dllname = "mymod",
+           initfunc = "initmod", nout = 1, outnames = "Sum")
+
+out
+
+```
+
+
+The integration routine (here ode) recognizes that the model is speciﬁed as a
+DLL due to the fact that arguments func and jacfunc are not regular R-functions
+but character strings. Thus, the integrator will check whether the function is
+loaded in the DLL with name mymod. 
+
+Note that mymod, as speciﬁed by dllname gives the name of the shared library
+without exten- sion. This DLL should contain all the compiled function or
+subroutine deﬁnitions referred to in func, jacfunc and initfunc.
+
+Also, if func is speciﬁed in compiled code, then jacfunc and initfunc
+(if present) should also be speciﬁed in a compiled language. It is not allowed
+to mix R-functions and compiled functions.
+
+Note also that, when invoking the integrator, we have to specify the number of
+ordinary output variables, nout. This is because the integration routine has to
+allocate memory to pass these output variables back to R. There is no way to
+check for the number of output variables in a DLL automatically. If in the
+calling of the integration routine the number of output variables is too low,
+then R may freeze and need to be terminated! Therefore it is advised that one 
+checks in the code whether nout has been speciﬁed correctly. In the FORTRAN
+example above, the statement if (ip(1) < 1) call rexit("nout should be at least
+1") does this. Note that it is not an error (just a waste of memory) to set nout
+to a too large value.
+
+Finally, in order to label the output matrix, the names of the ordinary output
+variables have to be passed explicitly (outnames). This is not necessary for the
+state variables, as their names are known through their initial condition (y).
+
+## Unload the Fortran subroutine. Generic OS
+```{r}
+dyn.unload(paste("mymod", .Platform$dynlib.ext, sep = ""))
+```
