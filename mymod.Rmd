@@ -76,8 +76,8 @@ dyn.load(paste("mymod", .Platform$dynlib.ext, sep = ""))
 ```
 
 
+This will create the ﬁle `mymod.dll` on Windows, or mymod.so on other platforms.
 
-This will create ﬁle `mymod.dll` on windows, or mymod.so on other platforms.
 We load the DLL, in windows as:
 
 ```{r}
