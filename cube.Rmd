@@ -42,9 +42,17 @@ system("R CMD SHLIB cube.f")
 The file `cube.dll` should be there now.
 
 
+## Load the subroutine. Generic OS call
+```{r}
+# this loads the library in any system, Windows or Linux
+dyn.load(paste("cube", .Platform$dynlib.ext, sep = ""))
+
+# or use this
+# dyn.load('cube.dll') for Windows only
+```
+
 We call this function with:
 ```{r}
-dyn.load("cube.dll")
 
 cube <- function(x) {
   out <-  .Fortran("cube", 
@@ -66,6 +74,9 @@ for(num in 1:10)
                    x = as.double(num))$x)
 ```
 
-
+## Unload the Fortran subroutine. Generic OS
+```{r}
+dyn.unload(paste("cube", .Platform$dynlib.ext, sep = ""))
+```
 
 

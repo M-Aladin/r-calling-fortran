@@ -49,6 +49,15 @@ system("R CMD SHLIB fib.f90")
 
 ```
 
+## Load the subroutine. Generic OS call
+```{r}
+# this loads the library in any system, Windows or Linux
+dyn.load(paste("fib", .Platform$dynlib.ext, sep = ""))
+
+# or use this
+# dyn.load('fib.dll') for Windows only
+```
+
 ## Test the function
 We call this function with:
 ```{r}
@@ -92,6 +101,10 @@ for(n in 1:10)
                  result = integer(1))$result)
 ```
 
+## Unload the Fortran subroutine. Generic OS
+```{r}
+dyn.unload(paste("fib", .Platform$dynlib.ext, sep = ""))
+```
 
 
 

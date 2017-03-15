@@ -64,16 +64,24 @@ given a name (k1, ...).
 system("R CMD SHLIB mymod.f")
 ```
 
+```{r}
+library(deSolve)
+```
+
+```{r}
+# this loads the library in any system, Windows or Linux
+dyn.load(paste("mymod", .Platform$dynlib.ext, sep = ""))
+
+# dyn.load("mymod.dll")
+```
+
+
+
 This will create ﬁle `mymod.dll` on windows, or mymod.so on other platforms.
 We load the DLL, in windows as:
 
 ```{r}
 library(deSolve)
-
-# dyn.load("mymod.dll")
-
-# this loads the library in any system, Windows or Linux
-dyn.load(paste("mymod", .Platform$dynlib.ext, sep = ""))
 
 parms <- c(k1 = 0.04, k2 = 1e4, k3=3e7)
 Y <- c(y1 = 1.0, y2 = 0.0, y3 = 0.0)
@@ -115,3 +123,8 @@ to a too large value.
 Finally, in order to label the output matrix, the names of the ordinary output
 variables have to be passed explicitly (outnames). This is not necessary for the
 state variables, as their names are known through their initial condition (y).
+
+## Unload the Fortran subroutine. Generic OS
+```{r}
+dyn.unload(paste("mymod", .Platform$dynlib.ext, sep = ""))
+```
