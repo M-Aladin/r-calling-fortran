@@ -93,6 +93,7 @@ Sometimes, the DLL file is locked because it was called by R but not released. I
 # delete existing files first
 file.remove("convolve77.o")
 file.remove("convolve77.dll")
+file.remove("convolve77.so")
 
 # now, compile
 system("R CMD SHLIB convolve77.f")
@@ -115,9 +116,6 @@ We call this function with:
 ```{r}
 
 convolvef77 <- function(x, y) {
-  
-  
-  
   lx = length(x)
   ly = length(y)
   retdata <- .Fortran("convolvef77",
@@ -191,8 +189,6 @@ grid()
 
 
 Okay, I think you get the point here. Using the Fortran code definitely helped speed things up. However, speed might not be the only reason you choose to link in Fortran code. For example I know of people who have written the bulk of their thesis analysis work using Fortran and now seek to leverage that effort within R. Sure, they could recode their stuff into R but that would probably result in lower performance results. Any time you have a significant body of work in one language you would like to avoid having to recode it in another. Lastly, there are other ways to bring in Fortran that I haven’t discussed here. The “inline” package allows one to compile fortran code inline within a given R program, which might be more appealing to some. Hope this has been helpful.
-
-
 
 
 We can also call the Fortran function multiple times, like this:

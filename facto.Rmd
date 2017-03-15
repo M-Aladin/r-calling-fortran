@@ -33,6 +33,7 @@ Sometimes, the DLL file is locked because it was called by R but not released. I
 # delete existing files first
 file.remove("facto.o")
 file.remove("facto.dll")
+file.remove("facto.so")
 
 # now, compile
 system("R CMD SHLIB facto.f90")
@@ -40,12 +41,17 @@ system("R CMD SHLIB facto.f90")
 ```
 The file `facto.dll` should be there now.
 
+## Load the subroutine. Generic OS call
+```{r}
+# this loads the library in any system, Windows or Linux
+dyn.load(paste("facto", .Platform$dynlib.ext, sep = ""))
+
+# or use this
+# dyn.load('facto.dll') for Windows only
+```
 
 We call this function with:
 ```{r}
-
-dyn.load("facto.dll")                     # load the .DLL
-
 facto <- function(num) {
   out <-  .Fortran("facto", 
                    n = as.integer(num), 
