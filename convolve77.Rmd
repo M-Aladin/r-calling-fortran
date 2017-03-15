@@ -93,6 +93,7 @@ Sometimes, the DLL file is locked because it was called by R but not released. I
 # delete existing files first
 file.remove("convolve77.o")
 file.remove("convolve77.dll")
+file.remove("convolve77.so")
 
 # now, compile
 system("R CMD SHLIB convolve77.f")
@@ -115,9 +116,6 @@ We call this function with:
 ```{r}
 
 convolvef77 <- function(x, y) {
-  
-  
-  
   lx = length(x)
   ly = length(y)
   retdata <- .Fortran("convolvef77",
