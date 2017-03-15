@@ -1,0 +1,94 @@
+---
+title: "Fibonacci function in Fortran"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+## Calling the Fortran function with the wrapper included
+As R can only call Fortran subroutines, sometimes writing a wrap is necessary.
+In this case the wrapper with the subroutine is inside the Fortran file.   
+This is a sample of the code inside `fib.f90`:
+```
+    INTEGER FUNCTION fib(n)
+      integer n
+      integer, parameter :: fib0 = 0, fib1 = 1
+      integer back1, back2, i
+      select case (n)
+        case (:0);      fib = fib0
+        case (1);       fib = fib1
+        case default
+          fib = fib1
+          back1 = fib0
+          do i = 2, n
+            back2 = back1
+            back1 = fib
+            fib   = back1 + back2
+          end do
+      end select
+    END FUNCTION
+    
+    SUBROUTINE fib_R_wrapper(n, answer)
+      INTEGER n, answer, fib
+      EXTERNAL fib
+      answer = fib(n)
+    END SUBROUTINE
+```   
+
+We call this function with:
+```{r}
+dyn.load("fib.dll")              # load the .DLL
+
+fib <- function(num) {
+  # R function that calls the Fortran function `fib` through
+  # a Fortran wrapper.
+  out <- .Fortran('fib_R_wrapper',         # `out` is a list and returns the result
+                  n=as.integer(num),       # and the parameter that were passed.
+                  result = as.integer(1))
+  return(out$result)             
+}
+
+# call the R function wrapper
+fib(10)    
+```
+
+## Call the Fortran function with an external Fortran wrapper
+In this case we create a Fortran wrapper, separate from the calculating function `fib`. This is the file `fib_R_wrapper.f`:
+
+```
+    SUBROUTINE fib_R_wrapper(n, answer)
+      INTEGER n, answer, fib
+      EXTERNAL fib
+      answer = fib(n)
+    END SUBROUTINE
+```
+
+We use the `.Fortran` function to call the Fortran wrapper.
+```{r}
+n = 10
+.Fortran('fib_R_wrapper', n = as.integer(n), result = integer(1))$result
+```
+
+We can also call the Fortran function many times, like this:
+```{r}
+for(n in 1:10)
+  print(.Fortran('fib_R_wrapper', 
+                 n = as.integer(n), 
+                 result = integer(1))$result)
+```
+
+
+## Compiling the file `fib.f90` from the notebook
+This could be done from the R prompt directly. In this case, we will link and compile to generate the DLL from the notebook.
+
+Sometimes, the DLL file is locked because it was called by R but not released. If this happens, exit R and try deleting the files again.
+```{r results="hold"}
+# delete existing files first
+file.remove("fib.o")
+file.remove("fib.dll")
+
+# now, compile
+system("R CMD SHLIB fib.f90")
+
+```
+

@@ -1,0 +1,71 @@
+---
+title: "Factorial function in Fortran"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+## The Fortran function 
+The factorial function resides in the file `facto.f`.
+Here is the code.
+```
+        subroutine facto(n,answer)
+c
+c simple subroutine to compute factorial
+c
+        integer n, answer, i
+ 
+        answer = 1
+        do 100 i = 2,n
+           answer = answer * i
+  100   continue 
+         
+        end
+```   
+
+Notice that `facto` is a subroutine not a function, so, we will not need a Fortran wrapper like we did in `fib.f`.
+
+## Compiling the file `facto.f` from the notebook
+This could be done from the R prompt directly. In this case, we will link and compile to generate the DLL from the notebook.
+
+Sometimes, the DLL file is locked because it was called by R but not released. If this happens, exit R and try deleting the files again.
+```{r results="hold"}
+# delete existing files first
+file.remove("facto.o")
+file.remove("facto.dll")
+
+# now, compile
+system("R CMD SHLIB facto.f90")
+
+```
+The file `facto.dll` should be there now.
+
+
+We call this function with:
+```{r}
+
+dyn.load("facto.dll")                     # load the .DLL
+
+facto <- function(num) {
+  out <-  .Fortran("facto", 
+                   n = as.integer(num), 
+                   answer = as.integer(1))
+  return(out$answer)
+}
+
+# call the R function wrapper
+facto(5)    
+```
+
+
+We can also call the Fortran function multiple times, like this:
+```{r}
+for(num in 1:10)
+  print(.Fortran('facto', 
+                 n = as.integer(num), 
+                 answer = integer(1))$answer)
+```
+
+
+
+

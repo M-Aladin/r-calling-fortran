@@ -1,0 +1,196 @@
+---
+title: "Convolution function in Fortran"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+Source: https://rollingyours.wordpress.com/2014/04/11/fortran-and-r-speed-things-up/
+
+## It’s all Convoluted
+Let’s consider the idea of doing discrete convolution between two vectors. (Note: This is discussed in the “Writing R Extensions” manual). Why did I pick such an example ? Well first it’s commonly referenced in R literature and , second, it is a good motivating case for using an external language to speed up the processing. The algorithm itself isn’t hard to code up either in R or Fortran. However, the performance in R isn’t so good once the vectors get larger. Check it out:
+
+```{r}
+conr <- function(x, y) {
+    lx <- length(x)
+    ly <- length(y)
+    cxy <- numeric(lx + ly - 1)
+    for(i in 1:lx) {
+        xi <- x[i]
+        for(j in 1:ly) {
+            ij <- i+j-1
+            cxy[ij] <- cxy[ij] + xi * y[j]
+        }
+    }
+    return(cxy)
+}
+```
+
+Let's check the timings for vectors of different sizes
+```{r}
+ 
+v1 = rnorm(100); v2 = rnorm(100)
+system.time(conr(v1,v2))
+
+v1 = rnorm(2000); v2 = rnorm(2000)
+system.time(conr(v1,v2))
+
+v1 = rnorm(4000); v2 = rnorm(4000)
+system.time(conr(v1,v2))
+```
+
+The timings grow significantly longer as the sizes of the vectors grow. So passing vectors of size 10,000 could take a very long time. While this blog isn’t specifically on performance let’s do a little bit more coding to get an idea about how poorly performing the convolution written in R is. We’ll use this for later comparison with the performance numbers resulting from the Fortran subroutine. Let’s write a wrapper function to the conr function. This will call conr with a variable x that represents the size of the vectors we wish to convolute. If you don’t understand exactly what is going on here don’t worry – just think of at as more exposure to the apply family of commands.
+
+
+```{r}
+timewrapconr <- function(x) {
+    times <- system.time(conr(rnorm(x),rnorm(x)))[3]
+    return(c(size=x,times))
+}
+ 
+# time the convolution for vectors of size 100,1000,2000, and 4000
+ 
+(convtimes <- sapply(c(100, 1000, 2000, 4000), timewrapconr))
+
+# Let's plot this
+library(lattice)
+ 
+xyplot(convtimes[2,]~convtimes[1,], type = c("p","l","g"),
+       xlab = "vector size", ylab = "elapsed time in seconds",
+       main = "Execution times for Convolution in R", pch = 19)
+```
+
+How do we address this problem ? Well there are opportunities for improvement within the R code by using vectorization techniques. A good start would be to somehow avoid the second for loop and there are ways to do that. In fact there is a way to avoid both loops altogether and maybe we’ll explore such an approach in another post. But for now let’s see if writing the code in Fortran and then linking it in could help improve things. So here is the rewritten convolution algorithm, which we will save into a file called `convolvef77.f`
+
+
+## The Fortran function 
+The function resides in the file `convolve77.f`.
+Here is the code.
+```
+      subroutine convolvef77 (x, lx, y, ly, xy)
+c
+c A basic implementation of convolution algorithm for two vectors
+c Here we assume that they are the same length just to simplify things
+c I use zero-based arrays here.
+c
+      integer lx, ly, i, j
+      double precision x(0:lx-1), y(0:ly-1), xy(0:lx+ly-2)
+      do 20 i = 0, (lx-1) 
+         do 15 j = 0, (ly-1) 
+            xy(i+j) = xy(i+j) + x(i) * y(j) 
+  15     continue  
+  20  continue 
+      end
+```   
+
+Notice that `convolve77` is a subroutine not a function, so, we will not need a Fortran wrapper like we did in `fib.f`.
+
+## Compiling the file `convolve77.f` from the notebook
+This could be done from the R prompt directly. In this case, we will link and compile to generate the DLL from the notebook.
+
+Sometimes, the DLL file is locked because it was called by R but not released. If this happens, exit R and try deleting the files again.
+```{r results="hold"}
+# delete existing files first
+file.remove("convolve77.o")
+file.remove("convolve77.dll")
+
+# now, compile
+system("R CMD SHLIB convolve77.f")
+
+```
+The file `facto.dll` should be there now.
+
+## Test the function
+We call this function with:
+```{r}
+
+convolvef77 <- function(x, y) {
+  dyn.load('convolve77.dll')
+  lx = length(x)
+  ly = length(y)
+  retdata <- .Fortran("convolvef77",
+                      x = as.double(x),
+                      lx = as.integer(lx), 
+                      y = as.double(y), 
+                      ly = as.integer(ly), 
+                      xy = double(lx+ly-1))$xy
+  return(retdata)
+}
+
+# call the R function wrapper
+
+# Now let's throw some large vectors at it. Look at how much better the times are
+ 
+v1 = rnorm(4000); v2 = rnorm(4000)
+system.time(convolvef77(v1,v2))
+
+v1 = rnorm(8000); v2 = rnorm(8000)
+system.time(convolvef77(v1,v2))
+```
+
+So the speed looks really good. So now let’s repeat the timing exercise we applied to the convolutions done in R.
+
+```{r}
+timewrapconf77 <- function(x) {
+    times <- system.time(convolvef77(rnorm(x), rnorm(x)))[3]
+    return(c(size=x,times))
+}
+ 
+(convtimes <- sapply(c(100,1000,2000,4000), timewrapconf77))
+```
+
+Wow. This is FAST !!!!! Let's throw some bigger vectors at it.
+```{r}
+# Wow. This is FAST !!!!! Let's throw some bigger vectors at it.
+
+(convtimes <- sapply(c(100,1000,2000,4000,10000,20000,50000),timewrapconf77))
+
+# Plot the times
+ 
+xyplot(convtimes[2,]~convtimes[1,],type=c("p","l","g"),
+       xlab = "vector size", ylab = "elapsed time in seconds",
+       main = "Execution times for Convolution in Fortran", pch = 19)
+```
+
+So using the Fortran subroutine took 2.0 seconds to convolute vectors of size 50,000 whereas using native R code to convolute a vector of size 1,000 took 3.5 seconds (these timings might vary depending on your architecture and OS). To get a better visual comparison let’s repeat the timings for both approaches, R and Fortran, and plot the results on the same graph so you can get some sense of proportion between the execution times. This isn’t hard to do. We’ll just rerun our timing functions:
+
+
+```{r}
+# this taks abut 12 minutes in the ZBOOK 15G2
+(convtimesr <- sapply(c(100,1000,2000,4000,10000,20000), timewrapconr))
+ 
+   
+(convtimesf77 <- sapply(c(100,1000,2000,4000,10000,20000), timewrapconf77))
+ 
+# Now plot them on the same graph
+ 
+plot(convtimesr[1,], convtimesr[2,], 
+     xlab = "Vector size",
+     ylab = "Elapsed time in seconds", 
+     main = "Convolution in R vs Fortran",
+     type = "l",col="red",lwd=2.5)
+ 
+points(convtimesf77[1,], convtimesf77[2,], type="l", col="blue", lwd=2.5)
+ 
+legend("topleft", c("R","Fortran"), col = c("red","blue"),
+        lty = c(1,1), lwd = c(2.5,2.5))
+grid()
+```
+
+
+Okay, I think you get the point here. Using the Fortran code definitely helped speed things up. However, speed might not be the only reason you choose to link in Fortran code. For example I know of people who have written the bulk of their thesis analysis work using Fortran and now seek to leverage that effort within R. Sure, they could recode their stuff into R but that would probably result in lower performance results. Any time you have a significant body of work in one language you would like to avoid having to recode it in another. Lastly, there are other ways to bring in Fortran that I haven’t discussed here. The “inline” package allows one to compile fortran code inline within a given R program, which might be more appealing to some. Hope this has been helpful.
+
+
+
+
+We can also call the Fortran function multiple times, like this:
+```{r}
+for(num in 1:10)
+  print(.Fortran('facto', 
+                 n = as.integer(num), 
+                 answer = integer(1))$answer)
+```
+
+
+
+

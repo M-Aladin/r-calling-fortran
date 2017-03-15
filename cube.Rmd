@@ -1,0 +1,71 @@
+---
+title: "Function to raise number to cube in Fortran"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+## The Fortran function 
+The factorial function resides in the file `cube.f`.
+Here is the code.
+
+```
+      subroutine cube(n, x)
+
+      integer n
+      double precision x(n)
+      integer i
+
+      do 100 i = 1, n
+        x(i) = x(i) ** 3
+ 100  continue
+
+      end
+
+```   
+
+Notice that `cube` is a subroutine not a function, so, we will not need a Fortran wrapper like we did in `fib.f`.
+
+## Compiling the file `cube` from the notebook
+This could be done from the R prompt directly. In this case, we will link and compile to generate the DLL from the notebook.
+
+Sometimes, the DLL file is locked because it was called by R but not released. If this happens, exit R and try deleting the files again.
+```{r results="hold"}
+# delete existing files first
+file.remove("cube.o")
+file.remove("cube.dll")
+
+# now, compile
+system("R CMD SHLIB cube.f")
+
+```
+The file `cube.dll` should be there now.
+
+
+We call this function with:
+```{r}
+dyn.load("cube.dll")
+
+cube <- function(x) {
+  out <-  .Fortran("cube", 
+                   n = as.integer(length(x)), 
+                   x = as.double(x))
+  return(out$x)
+}
+
+# call the R function wrapper
+cube(1234)    
+```
+
+
+We can also call the Fortran function multiple times, like this:
+```{r}
+for(num in 1:10)
+  print(.Fortran("cube", 
+                   n = as.integer(length(num)), 
+                   x = as.double(num))$x)
+```
+
+
+
+
