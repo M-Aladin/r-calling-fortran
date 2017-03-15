@@ -130,6 +130,11 @@ OMEXDIAsolve <- function (pars = list(), D = 60)  {
 }   
 ```
 
+
+```{r}
+OMEXDIAsteady()
+```
+
 ```{r}
 OMEXDIAsolve()
 ```
