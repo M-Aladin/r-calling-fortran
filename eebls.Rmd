@@ -3,7 +3,8 @@ title: "eebls"
 output: html_notebook
 ---
 
-> Giving error when using the R function. It is possible that the parameters are not correct.
+> Giving error when using the R function. It is possible that the parameters are not correct. We should take a look at the output parameters and use correctly `as.integer()`, or `integer(), `double()`.
+
 
 Source: http://www.stat.tamu.edu/~jlong/astrostat/fall2015/shiyuan.pdf
 
