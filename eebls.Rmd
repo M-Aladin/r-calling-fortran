@@ -3,6 +3,20 @@ title: "eebls"
 output: html_notebook
 ---
 
+Source: http://www.stat.tamu.edu/~jlong/astrostat/fall2015/shiyuan.pdf
+
+
+```{r}
+if(is.loaded("eebls")) dyn.unload(paste("eebls", .Platform$dynlib.ext, sep = ""))
+# delete existing files first
+file.remove("eebls.o")
+file.remove("eebls.dll")
+file.remove("eebls.so")
+
+# now, compile
+system("R CMD SHLIB eebls.f")
+```
+
 
 ```{r}
 
