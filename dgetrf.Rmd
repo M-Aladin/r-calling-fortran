@@ -1,7 +1,14 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document: default
+  html_notebook: default
 ---
+
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
 
 ## Description of the Fortran subroutine
 The code of the main file an be found in `dgetrf.f`. It has other Fortran dependencies.
@@ -70,7 +77,7 @@ The code of the main file an be found in `dgetrf.f`. It has other Fortran depend
 
 ## compiling several Fortran modules
 Use `-fPIC` at the end.
-```{r}
+```{r results='hold'}
 if(is.loaded("dgetrf")) dyn.unload(paste("dgetrf", .Platform$dynlib.ext, sep = ""))
 # delete existing files first
 file.remove("dgetrf.o")
@@ -116,12 +123,17 @@ $ info: int 0
 ```
 
 ## The R function
+* Be careful to match the argument types by explicit coersions with
+`as.integer` or `as.double` or by creating vectors of an explicit
+storage mode and length using the constructors `integer(n)` and
+`double(n)`
+
 ```{r}
 dgetrf <- function(m, n, mm = matrix(rnorm(m*n), nr = m)) {
   print(mm)
   # m:  number of rows; n:  number of columns
   lda <- max(1, m)
-  ipiv <- min(m,n)
+  ipiv <- min(m, n)
   mmdc = .Fortran("dgetrf", 
                   m = as.integer(m), n = as.integer(n),   # input
                   a = as.double(mm),                      # input/output
@@ -131,6 +143,9 @@ dgetrf <- function(m, n, mm = matrix(rnorm(m*n), nr = m)) {
 }
 ```
 
+> Note the subtle but important difference between `as.integer(4)`,
+which is of length 1 and has the value 4, and `integer(4)` which is
+an integer vector of 4 zeros.
 
 ```{r}
 rows = 5
