@@ -68,6 +68,8 @@ The code of the main file an be found in `dgetrf.f`. It has other Fortran depend
 *  =====================================================================
 ```
 
+## compiling several Fortran modules
+Use `-fPIC` at the end.
 ```{r}
 if(is.loaded("dgetrf")) dyn.unload(paste("dgetrf", .Platform$dynlib.ext, sep = ""))
 # delete existing files first
@@ -78,16 +80,17 @@ file.remove("dgetrf.so")
 # now, compile
 system("R CMD SHLIB  dgetrf.f iparam2stage.F iparmq.f dgetf2.f dlaswp.f  dlamch.f  ilaenv.f lsame.f ieeeck.f xerbla.f dgemm.f dtrsm.f -fPIC")
 
-
 ```
 
+## Load the library
 ```{r}
 # this loads the library in any system, Windows or Linux
 dyn.load(paste("dgetrf", .Platform$dynlib.ext, sep = ""))
 ```
 
 
-To call dgetrf from R we use .Fortran.
+## Call the Fortran library from R
+To call `dgetrf` from R we use .Fortran.
 ```{r}
 # Run DGETRF
 mm = matrix(rnorm(16), nr = 4)       # input data
