@@ -114,13 +114,34 @@ $ info: int 0
 
 ## The R function
 ```{r}
-
-dgetrf <- function(m, n, a) {
-mmdc = .Fortran("dgetrf", 
-                m = as.integer(4), n = as.integer(4),   # input
-                a = as.double(mm),                      # input/output
-                lda = as.integer(4),                    # input
-                ipiv = integer(4), info = integer(1))   # output
+dgetrf <- function(m, n, mm = matrix(rnorm(m*n), nr = m)) {
+  print(mm)
+  # m:  number of rows; n:  number of columns
+  lda <- max(1, m)
+  ipiv <- min(m,n)
+  mmdc = .Fortran("dgetrf", 
+                  m = as.integer(m), n = as.integer(n),   # input
+                  a = as.double(mm),                      # input/output
+                  lda = as.integer(lda),                    # input
+                  ipiv = integer(ipiv), info = integer(1))   # output
+  return(mmdc)
 }
+```
+
+
+```{r}
+rows = 5
+cols = 5
+mm = matrix(rnorm(rows*cols), nr = rows)       # input data
+
+dgetrf(rows, cols, mm)
+```
+
+## or this other way
+```{r}
+rows = 4
+cols = 4
+
+dgetrf(rows, cols)   ## the matrix is generated at the function args
 ```
 
