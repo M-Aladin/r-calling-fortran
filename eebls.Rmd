@@ -19,6 +19,23 @@ system("R CMD SHLIB eebls.f")
 
 
 ```{r}
+# this loads the library in any system, Windows or Linux
+dyn.load(paste("eebls", .Platform$dynlib.ext, sep = ""))
+```
 
+
+```{r}
+n = 100
+t = 
+res <- .Fortran("eebls",
+                n = as.integer(n),
+                t = as.double(t), x = as.double(x),
+                u = as.double(u), v = as.double(v),
+                nf = as.integer(nf), fmin = as.double(fmin), df = as.double(df),
+                nb = as.integer(nb), qmi = as.double(qmi), qma = as.double(qma),
+                p = as.double(p), bper = as.double(bper), bpow = as.double(bpow),
+                depth = as.double(depth), qtran = as.double(qtran),
+                in1 = as.integer(in1), in2 = as.integer(in2)
+                )
 ```
 
