@@ -36,3 +36,5 @@ vignettes/*.pdf
 *.o
 
 *.html
+
+\.directory
