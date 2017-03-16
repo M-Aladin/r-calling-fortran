@@ -31,9 +31,11 @@ This could be done from the R prompt directly. In this case, we will link and co
 
 Sometimes, the DLL file is locked because it was called by R but not released. If this happens, exit R and try deleting the files again.
 ```{r results="hold"}
+if(is.loaded("cube")) dyn.unload(paste("cube", .Platform$dynlib.ext, sep = ""))
 # delete existing files first
 file.remove("cube.o")
 file.remove("cube.dll")
+file.remove("cube.so")
 
 # now, compile
 system("R CMD SHLIB cube.f")
@@ -56,22 +58,22 @@ We call this function with:
 
 cube <- function(x) {
   out <-  .Fortran("cube", 
-                   n = as.integer(length(x)), 
-                   x = as.double(x))
-  return(out$x)
+                   n = as.integer(x), 
+                   x = double(x))
+  return(out)
 }
 
 # call the R function wrapper
-cube(1234)    
+cube(10)    
 ```
 
 
 We can also call the Fortran function multiple times, like this:
 ```{r}
-for(num in 1:10)
-  print(.Fortran("cube", 
-                   n = as.integer(length(num)), 
-                   x = as.double(num))$x)
+for(num in 1:20)
+  cat(.Fortran("cube", 
+                   n = as.integer(num), 
+                   x = double(num))$x, "\n")
 ```
 
 ## Unload the Fortran subroutine. Generic OS

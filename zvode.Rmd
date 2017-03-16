@@ -3,6 +3,8 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+> Example not working because mixing values for `yini`
+
 For the following Fortran subroutine, we will compile and link it to call it from R.
 
 ```
