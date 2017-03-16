@@ -56,7 +56,14 @@ dyn.load(paste("eebls", .Platform$dynlib.ext, sep = ""))
 
 
 ```{r}
-eebls <- function(n, t, x, u, v,nf, fmin, df, nb, qmi, qma) {
+eebls <- function(n, t, x, u, v, nf, fmin, df, nb, qmi, qma) {
+  p = t
+  bper = fmin
+  bpow = bper
+  depth = fmin
+  qtran = fmin
+  in1 = 1
+  in2 = 1
   res <- .Fortran("eebls",
                   n = as.integer(n),
                   t = as.double(t), x = as.double(x),
