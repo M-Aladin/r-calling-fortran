@@ -5,6 +5,9 @@ output:
   html_notebook: default
 ---
 
+Source: http://www.stat.wisc.edu/courses/st771-bates/slides/wk3-4.pdf
+        https://github.com/Reference-LAPACK/lapack
+
 ```{r setup, include=F, error=T, message=F, warning=F}
 knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
 ```
