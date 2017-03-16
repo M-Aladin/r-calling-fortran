@@ -5,6 +5,37 @@ output: html_notebook
 
 Source: http://www.stat.tamu.edu/~jlong/astrostat/fall2015/shiyuan.pdf
 
+```
+c     Input parameters:
+c     ~~~~~~~~~~~~~~~~~
+c
+c     n    = number of data points
+c     t    = array {t(i)}, containing the time values of the time series
+c     x    = array {x(i)}, containing the data values of the time series
+c     u    = temporal/work/dummy array, must be dimensioned in the
+c            calling program in the same way as  {t(i)}
+c     v    = the same as  {u(i)}
+c     nf   = number of frequency points in which the spectrum is computed
+c     fmin = minimum frequency (MUST be > 0)
+c     df   = frequency step
+c     nb   = number of bins in the folded time series at any test period
+c     qmi  = minimum fractional transit length to be tested
+c     qma  = maximum fractional transit length to be tested
+c
+c     Output parameters:
+c     ~~~~~~~~~~~~~~~~~~
+c
+c     p    = array {p(i)}, containing the values of the BLS spectrum
+c            at the i-th frequency value -- the frequency values are
+c            computed as  f = fmin + (i-1)*df
+c     bper = period at the highest peak in the frequency spectrum
+c     bpow = value of {p(i)} at the highest peak
+c     depth= depth of the transit at   *bper*
+c     qtran= fractional transit length  [ T_transit/bper ]
+c     in1  = bin index at the start of the transit [ 0 < in1 < nb+1 ]
+c     in2  = bin index at the end   of the transit [ 0 < in2 < nb+1 ]
+```
+
 
 ```{r}
 if(is.loaded("eebls")) dyn.unload(paste("eebls", .Platform$dynlib.ext, sep = ""))
@@ -25,17 +56,36 @@ dyn.load(paste("eebls", .Platform$dynlib.ext, sep = ""))
 
 
 ```{r}
-n = 100
-t = 
-res <- .Fortran("eebls",
-                n = as.integer(n),
-                t = as.double(t), x = as.double(x),
-                u = as.double(u), v = as.double(v),
-                nf = as.integer(nf), fmin = as.double(fmin), df = as.double(df),
-                nb = as.integer(nb), qmi = as.double(qmi), qma = as.double(qma),
-                p = as.double(p), bper = as.double(bper), bpow = as.double(bpow),
-                depth = as.double(depth), qtran = as.double(qtran),
-                in1 = as.integer(in1), in2 = as.integer(in2)
-                )
+eebls <- function(n, t, x, u, v,nf, fmin, df, nb, qmi, qma) {
+  res <- .Fortran("eebls",
+                  n = as.integer(n),
+                  t = as.double(t), x = as.double(x),
+                  u = as.double(u), v = as.double(v),
+                  nf = as.integer(nf), fmin = as.double(fmin), df = as.double(df),
+                  nb = as.integer(nb), qmi = as.double(qmi), qma = as.double(qma),
+                  p = as.double(p), bper = as.double(bper), bpow = as.double(bpow),
+                  depth = as.double(depth), qtran = as.double(qtran),
+                  in1 = as.integer(in1), in2 = as.integer(in2)
+                  )
+  return(res)
+}
 ```
 
+
+```{r}
+n = 100
+t = seq(0, 1, 0.01)
+x = seq(1, 10, 0.1)
+df = 0.0001
+nf = 500
+nb = 200
+qmi = 0.01
+qma = 0.8
+fmin = 1 / (400.0 * 1.1)
+
+u <- matrix(1, length(t), ncol = 1)
+v <- matrix(1, length(t), ncol = 1)
+
+eebls(n = n, t = t, x = x, u = u, v = v, nf = nf, fmin = fmin, df = df, 
+      nb = nb, qmi = qmi, qma = qma)
+```
