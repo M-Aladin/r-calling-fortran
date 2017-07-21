@@ -3,6 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+## Cleaning and compiling
 ```{r}
 ffile <- "fact_blasingame.f"
 # delete existing files first
@@ -14,6 +15,7 @@ if (file.exists("fact_blasingame.so"))  file.remove("fact_blasingame.so")
 system("R CMD SHLIB fact_blasingame.f")
 ```
 
+## Load the subroutine
 
 ```{r}
 # this loads the library in any system, Windows or Linux
@@ -37,6 +39,7 @@ fact <- function(num) {
 fact(12)    
 ```
 
+## Apply the function on multiple values
 ```{r}
 v <- c(1, 5, 10, 11, 12, 13)
 sapply(v, fact)
@@ -47,3 +50,4 @@ sapply(v, fact)
 ```{r}
 dyn.unload(paste("fact_blasingame", .Platform$dynlib.ext, sep = ""))
 ```
+
