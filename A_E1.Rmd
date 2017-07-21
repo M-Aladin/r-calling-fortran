@@ -50,6 +50,10 @@ library(ggplot2)
 
 ggplot(df, aes(x = x, y = Ei)) + geom_line(col="blue") + 
   geom_line(aes(x=x, y=Eu), linetype = "dotted") + ylab("Ei(x)") +
+  annotate("text", x = 1, y = 1.1, label = "problem 1", angle=0, size=4, 
+                colour='black', fontface = "bold") +
+  annotate("text", x = 2, y = 1, parse = TRUE, 
+           label = "frac(1, sqrt(2 * pi)) * e ^ {-x^2 / 2}") +
     geom_segment(aes(x = 1, y = 1, 
                    xend = 0.75, yend = 0.35), 
                colour='#CC00FF', 
