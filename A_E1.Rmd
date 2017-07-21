@@ -24,11 +24,11 @@ dyn.load(paste("A_E1", .Platform$dynlib.ext, sep = ""))
 ## Test the function
 We call this function with:
 ```{r}
-EI <- function(num) {
+EI <- function(x) {
   # R function that calls the Fortran function `fib` through
   # a Fortran wrapper.
   out <- .Fortran('A_E1_SUB',         # `out` is a list and returns the result
-                  n=as.double(num),       # and the parameter that were passed.
+                  n = as.double(x),       # and the parameter that were passed.
                   result = as.double(1))
   return(out$result)             
 }
@@ -38,8 +38,23 @@ EI(12)
 ```
 
 ```{r}
-v <- c(1, 5, 10, 11, 12, 13)
-sapply(v, EI)
+x <- seq(0, 2.5, 0.01)
+Ei <- sapply(x, EI)
+Eu <- sapply(x, function(x) log(1/(exp(0.577216)*x)))
+df <- data.frame(x, Ei, Eu)
+df
+```
+
+```{r fig.asp=1}
+library(ggplot2)
+
+ggplot(df, aes(x = x, y = Ei)) + geom_line(col="blue") + 
+  geom_line(aes(x=x, y=Eu), linetype = "dotted") + ylab("Ei(x)") +
+    geom_segment(aes(x = 1, y = 1, 
+                   xend = 0.75, yend = 0.35), 
+               colour='#CC00FF', 
+               size=0.5,  
+               arrow = arrow(length = unit(0.5, "cm")))
 ```
 
 
@@ -47,3 +62,21 @@ sapply(v, EI)
 ```{r}
 dyn.unload(paste("A_E1", .Platform$dynlib.ext, sep = ""))
 ```
+
+```{r}
+library(ggplot2)
+library(grid)
+
+ggplot(df, aes(Date, CPU)) + geom_point() + 
+       annotate("text", x = as.POSIXct(c("2013-03-11 23:00:00")), 
+                y = 90, label = "problem 1", angle=90, size=5, 
+                colour='black', face="bold") + 
+  geom_segment(aes(x = as.POSIXct(c("2013-03-11 09:00:00")), 
+                                   y = -30, 
+                   xend = as.POSIXct(c("2013-03-11 09:00:00")), 
+                   yend = 0), 
+               colour='#CC00FF', 
+               size=1,  
+               arrow = arrow(length = unit(0.5, "cm")))
+```
+
