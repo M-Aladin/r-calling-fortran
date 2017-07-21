@@ -1,0 +1,49 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+ffile <- "fact_blasingame.f"
+# delete existing files first
+if (file.exists("fact_blasingame.o"))   file.remove("fact_blasingame.o")
+if (file.exists("fact_blasingame.dll")) file.remove("fact_blasingame.dll")
+if (file.exists("fact_blasingame.so"))  file.remove("fact_blasingame.so")
+
+# now, compile
+system("R CMD SHLIB fact_blasingame.f")
+```
+
+
+```{r}
+# this loads the library in any system, Windows or Linux
+dyn.load(paste("fact_blasingame", .Platform$dynlib.ext, sep = ""))
+```
+
+
+## Test the function
+We call this function with:
+```{r}
+fact <- function(num) {
+  # R function that calls the Fortran function `fib` through
+  # a Fortran wrapper.
+  out <- .Fortran('fact_R_wrapper',         # `out` is a list and returns the result
+                  n=as.integer(num),       # and the parameter that were passed.
+                  result = as.double(1))
+  return(out$result)             
+}
+
+# call the R function wrapper
+fact(12)    
+```
+
+```{r}
+v <- c(1, 5, 10, 11, 12, 13)
+sapply(v, fact)
+```
+
+
+## Unload the Fortran subroutine. Generic OS
+```{r}
+dyn.unload(paste("fact_blasingame", .Platform$dynlib.ext, sep = ""))
+```
