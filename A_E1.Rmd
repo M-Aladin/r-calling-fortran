@@ -1,0 +1,49 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+ffile <- "A_E1"
+# delete existing files first
+if (file.exists("A_E1.o"))   file.remove("A_E1.o")
+if (file.exists("A_E1.dll")) file.remove("A_E1.dll")
+if (file.exists("A_E1.so"))  file.remove("A_E1.so")
+
+# now, compile
+system("R CMD SHLIB A_E1.f")
+```
+
+
+```{r}
+# this loads the library in any system, Windows or Linux
+dyn.load(paste("A_E1", .Platform$dynlib.ext, sep = ""))
+```
+
+
+## Test the function
+We call this function with:
+```{r}
+EI <- function(num) {
+  # R function that calls the Fortran function `fib` through
+  # a Fortran wrapper.
+  out <- .Fortran('A_E1_SUB',         # `out` is a list and returns the result
+                  n=as.double(num),       # and the parameter that were passed.
+                  result = as.double(1))
+  return(out$result)             
+}
+
+# call the R function wrapper
+EI(12)    
+```
+
+```{r}
+v <- c(1, 5, 10, 11, 12, 13)
+sapply(v, EI)
+```
+
+
+## Unload the Fortran subroutine. Generic OS
+```{r}
+dyn.unload(paste("A_E1", .Platform$dynlib.ext, sep = ""))
+```
