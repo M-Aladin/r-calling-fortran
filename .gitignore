@@ -34,6 +34,7 @@ vignettes/*.pdf
 .Rproj.user
 
 *.o
+*.dll
 
 *.html
 
