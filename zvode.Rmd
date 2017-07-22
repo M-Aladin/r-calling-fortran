@@ -56,7 +56,7 @@ dyn.load(paste("zvodedll", .Platform$dynlib.ext, sep = ""))
 ```{r}
 library(deSolve)
 
-#yini <- c(y1 = 1.0, y2 = 0.0, y3 = 0.0)
+yini <- c(y1 = 1.0, y2 = 0.0, y3 = 0.0)
 #times <- c(0, 0.4*10^(0:11) )
 
 outF <- zvode(func = "fex", jacfunc = "jex", y = yini, parms = NULL,
