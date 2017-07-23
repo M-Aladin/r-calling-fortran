@@ -4,6 +4,36 @@ output: html_notebook
 ---
 
 ```{r}
+library(tibble)
+# delete existing files first
+if (file.exists("A_GAMMA.o"))   file.remove("A_GAMMA.o")
+if (file.exists("A_GAMMA.dll")) file.remove("A_GAMMA.dll")
+if (file.exists("A_GAMMA.so"))  file.remove("A_GAMMA.so")
+
+# compile
+system("R CMD SHLIB A_GAMMA.f")
+# load the library in any system: Windows, Mac or Linux
+dyn.load(paste("A_GAMMA", .Platform$dynlib.ext, sep = ""))
+
+# create an R function
+A_GAMMA <- function(x) {
+  # R function that calls the Fortran function through a Fortran wrapper.
+  out <- .Fortran('A_GAMMA_SUB',         # `out` is a list and returns the result
+                  n = as.double(x),       # and the parameter that were passed.
+                  result = as.double(1))
+  return(out$result)             
+}
+
+# generate some data
+x <- seq(-6, 6.01, 0.01)
+a_gamma <- sapply(x, A_GAMMA)
+df <- data.frame(x, a_gamma)
+as_tibble(df)
+```
+
+
+
+```{r}
 ffile <- "A_GAMMA"
 # delete existing files first
 if (file.exists("A_GAMMA.o"))   file.remove("A_GAMMA.o")
@@ -40,11 +70,31 @@ A_GAMMA(10)
 ```
 
 ```{r}
-x <- seq(0, 2.5, 0.01)
+x <- seq(-6, 6.01, 0.01)
+# fact <- sapply(x, function(x) factorial(as.integer(x)))
 a_gamma <- sapply(x, A_GAMMA)
+# df <- data.frame(x, a_gamma, fact)
 df <- data.frame(x, a_gamma)
 df
 ```
+
+
+```{r}
+plot(df$x, df$a_gamma, ylim = c(-10,10))
+```
+
+
+```{r warning=FALSE}
+library(ggplot2)
+ggplot(df, aes(x = x, y = a_gamma)) + geom_line(col="blue", size=1) + 
+  ylim(-10, 10) +  
+  geom_vline(xintercept= 0, color= "red", linetype = "dashed") +
+  geom_vline(xintercept=-3, color= "red", linetype = "dashed") +
+  geom_vline(xintercept=-1, color= "red", linetype = "dashed") +
+  geom_vline(xintercept=-2, color= "red", linetype = "dashed") +
+  geom_hline(yintercept= 0, color= "red", linetype = "dashed")
+```
+
 
 ```{r fig.asp=1}
 library(ggplot2)
